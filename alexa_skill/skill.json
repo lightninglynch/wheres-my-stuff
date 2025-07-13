@@ -1,0 +1,26 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "intents": [
+        {
+          "name": "FindObjectIntent",
+          "slots": [
+            {
+              "name": "object",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "where is my {object}",
+            "find my {object}",
+            "where did I leave my {object}"
+          ]
+        },
+        { "name": "AMAZON.CancelIntent" },
+        { "name": "AMAZON.HelpIntent" },
+        { "name": "AMAZON.StopIntent" }
+      ],
+      "invocationName": "object finder"
+    }
+  }
+}
