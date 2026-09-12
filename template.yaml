@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Where's My Stuff - object location ingest and Alexa skill
+
+Parameters:
+  AlexaSkillId:
+    Type: String
+    Default: ""
+    Description: Alexa skill application ID (amzn1.ask.skill...) for request verification
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 256
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref ObjectLocationsTable
+
+Resources:
+  ObjectLocationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ObjectLocations
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: object
+          AttributeType: S
+      KeySchema:
+        - AttributeName: object
+          KeyType: HASH
+
+  TrackApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: WheresMyStuffTrackPlan
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: .
+      Handler: function.handler
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref ObjectLocationsTable
+      Events:
+        Track:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TrackApi
+            Path: /track
+            Method: POST
+            Auth:
+              ApiKeyRequired: true
+
+  AlexaSkillFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: .
+      Handler: skill_handler.lambda_handler
+      Environment:
+        Variables:
+          ALEXA_SKILL_ID: !Ref AlexaSkillId
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ObjectLocationsTable
+      Events:
+        Alexa:
+          Type: AlexaSkill
+
+Outputs:
+  TrackApiUrl:
+    Description: Detector POST endpoint
+    Value: !Sub "https://${TrackApi}.execute-api.${AWS::Region}.amazonaws.com/prod/track"
+  TrackApiKeyId:
+    Description: API key id; fetch the value with aws apigateway get-api-key --include-value
+    Value: !Ref TrackApiApiKey
+  AlexaSkillFunctionArn:
+    Description: Set this ARN as the Alexa skill endpoint
+    Value: !GetAtt AlexaSkillFunction.Arn
+  ObjectLocationsTableName:
+    Description: DynamoDB table for last-seen objects
+    Value: !Ref ObjectLocationsTable
