@@ -1,0 +1,1 @@
+# Lambda runtime provides boto3. Shared code has no third-party deps.

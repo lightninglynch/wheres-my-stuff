@@ -1,27 +1,39 @@
-# aws_backend/function.py
+"""HTTP ingest Lambda: store last-seen object locations in DynamoDB."""
+
+from __future__ import annotations
+
 import json
 import os
+
 import boto3
 
+from shared.ingest import parse_track_body
+
 dynamodb = boto3.resource("dynamodb")
-TABLE    = os.environ["DYNAMODB_TABLE"]  # e.g. "ObjectLocations"
-table    = dynamodb.Table(TABLE)
+_TABLE_NAME = os.environ.get("DYNAMODB_TABLE")
+table = dynamodb.Table(_TABLE_NAME) if _TABLE_NAME else None
+
+
+def _response(status: int, payload: dict) -> dict:
+    return {
+        "statusCode": status,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(payload),
+    }
+
 
 def handler(event, context):
-    body = json.loads(event.get("body") or "{}")
-    obj  = body.get("object")
-    ts   = body.get("timestamp")
-    nbrs = body.get("neighbors", [])
+    if table is None:
+        return _response(500, {"error": "DYNAMODB_TABLE is not configured"})
 
-    if not obj or not ts:
-        return {
-          "statusCode": 400,
-          "body": json.dumps({"error": "object & timestamp required"})
-        }
+    try:
+        body = json.loads(event.get("body") or "{}")
+    except (TypeError, json.JSONDecodeError):
+        return _response(400, {"error": "invalid JSON"})
 
-    table.put_item(Item={
-        "object":    obj,
-        "timestamp": ts,
-        "neighbors": nbrs
-    })
-    return {"statusCode": 200, "body": json.dumps({"status": "OK"})}
+    item, error = parse_track_body(body)
+    if error:
+        return _response(400, {"error": error})
+
+    table.put_item(Item=item)
+    return _response(200, {"status": "OK", "object": item["object"]})

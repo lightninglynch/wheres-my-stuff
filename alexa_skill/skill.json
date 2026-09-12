@@ -1,26 +1,93 @@
 {
   "interactionModel": {
     "languageModel": {
+      "invocationName": "object finder",
       "intents": [
         {
           "name": "FindObjectIntent",
           "slots": [
             {
               "name": "object",
-              "type": "AMAZON.SearchQuery"
+              "type": "OBJECT"
             }
           ],
           "samples": [
             "where is my {object}",
+            "where's my {object}",
             "find my {object}",
-            "where did I leave my {object}"
+            "find the {object}",
+            "where did I leave my {object}",
+            "where did I put my {object}",
+            "have you seen my {object}",
+            "locate my {object}"
           ]
         },
-        { "name": "AMAZON.CancelIntent" },
-        { "name": "AMAZON.HelpIntent" },
-        { "name": "AMAZON.StopIntent" }
+        {
+          "name": "ListObjectsIntent",
+          "slots": [],
+          "samples": [
+            "what have you seen",
+            "what have you found",
+            "what can you find",
+            "what objects have you seen",
+            "list what you've seen",
+            "what did you see"
+          ]
+        },
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] },
+        { "name": "AMAZON.NavigateHomeIntent", "samples": [] }
       ],
-      "invocationName": "object finder"
+      "types": [
+        {
+          "name": "OBJECT",
+          "values": [
+            {
+              "name": {
+                "value": "phone",
+                "synonyms": ["cell phone", "mobile", "iphone", "smartphone", "cellphone"]
+              }
+            },
+            {
+              "name": {
+                "value": "keys",
+                "synonyms": ["key", "house keys", "car keys"]
+              }
+            },
+            {
+              "name": {
+                "value": "wallet",
+                "synonyms": ["billfold", "purse"]
+              }
+            },
+            {
+              "name": {
+                "value": "charger",
+                "synonyms": ["phone charger", "cable", "charging cable", "power adapter"]
+              }
+            },
+            {
+              "name": {
+                "value": "remote",
+                "synonyms": ["remote control", "tv remote"]
+              }
+            },
+            {
+              "name": {
+                "value": "glasses",
+                "synonyms": ["eyeglasses", "spectacles"]
+              }
+            },
+            {
+              "name": {
+                "value": "headphones",
+                "synonyms": ["headset", "earbuds", "ear buds", "airpods"]
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
